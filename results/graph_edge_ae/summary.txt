@@ -1,0 +1,16 @@
+Model: graph_edge_ae
+Runs: 5
+
+Mean +/- std across seeds
+
+Validation:
+  roc_auc: 0.942800 +/- 0.010858
+  pr_auc: 0.998545 +/- 0.000275
+  fpr: 0.050120 +/- 0.000267
+  attack_recall: 0.815172 +/- 0.000561
+
+Test:
+  roc_auc: 0.943279 +/- 0.010706
+  pr_auc: 0.998557 +/- 0.000271
+  fpr: 0.050367 +/- 0.000452
+  attack_recall: 0.814991 +/- 0.000549

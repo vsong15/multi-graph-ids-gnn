@@ -1,0 +1,16 @@
+Model: feature_ae
+Runs: 5
+
+Mean +/- std across seeds
+
+Validation:
+  roc_auc: 0.929738 +/- 0.011454
+  pr_auc: 0.998158 +/- 0.000270
+  fpr: 0.050180 +/- 0.000358
+  attack_recall: 0.811870 +/- 0.004644
+
+Test:
+  roc_auc: 0.930228 +/- 0.011362
+  pr_auc: 0.998167 +/- 0.000267
+  fpr: 0.051007 +/- 0.000445
+  attack_recall: 0.811648 +/- 0.004667

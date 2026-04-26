@@ -1,0 +1,37 @@
+Model: isoforest
+Seed: 100
+
+Config:
+  graph_file: graphs/web_ids23_graph.pt
+  max_train: 0
+  max_eval: 0
+  epochs: 30
+  batch_size: 8192
+  lr: 0.001
+  hidden_channels: 128
+  latent_channels: 64
+  threshold_percentile: 95.0
+  device: cpu
+  train_split_size: 577630
+  val_split_size: 5441530
+  test_split_size: 5441532
+
+Validation:
+  ROC-AUC: 0.920428
+  PR-AUC: 0.997113
+  Threshold: 0.545216
+  False positive rate: 0.050001
+  Attack recall / detection rate: 0.484339
+  Confusion matrix [[TN, FP], [FN, TP]]:
+  [[117589, 6189],
+   [2742159, 2575593]]
+
+Test:
+  ROC-AUC: 0.920093
+  PR-AUC: 0.997094
+  Threshold: 0.545216
+  False positive rate: 0.050784
+  Attack recall / detection rate: 0.483965
+  Confusion matrix [[TN, FP], [FN, TP]]:
+  [[117493, 6286],
+   [2744146, 2573607]]

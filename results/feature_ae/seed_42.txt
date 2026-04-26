@@ -1,0 +1,37 @@
+Model: feature_ae
+Seed: 42
+
+Config:
+  graph_file: graphs/web_ids23_graph.pt
+  max_train: 0
+  max_eval: 0
+  epochs: 30
+  batch_size: 8192
+  lr: 0.001
+  hidden_channels: 128
+  latent_channels: 64
+  threshold_percentile: 95.0
+  device: cpu
+  train_split_size: 577630
+  val_split_size: 5441530
+  test_split_size: 5441532
+
+Validation:
+  ROC-AUC: 0.919188
+  PR-AUC: 0.997893
+  Threshold: 0.020188
+  False positive rate: 0.050817
+  Attack recall / detection rate: 0.806425
+  Confusion matrix [[TN, FP], [FN, TP]]:
+  [[117488, 6290],
+   [1029382, 4288370]]
+
+Test:
+  ROC-AUC: 0.919822
+  PR-AUC: 0.997906
+  Threshold: 0.020188
+  False positive rate: 0.051689
+  Attack recall / detection rate: 0.806183
+  Confusion matrix [[TN, FP], [FN, TP]]:
+  [[117381, 6398],
+   [1030672, 4287081]]

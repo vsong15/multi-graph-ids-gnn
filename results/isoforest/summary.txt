@@ -1,0 +1,16 @@
+Model: isoforest
+Runs: 5
+
+Mean +/- std across seeds
+
+Validation:
+  roc_auc: 0.916012 +/- 0.006526
+  pr_auc: 0.996709 +/- 0.000257
+  fpr: 0.050006 +/- 0.000011
+  attack_recall: 0.482638 +/- 0.001395
+
+Test:
+  roc_auc: 0.915802 +/- 0.006481
+  pr_auc: 0.996687 +/- 0.000259
+  fpr: 0.050495 +/- 0.000350
+  attack_recall: 0.482294 +/- 0.001387

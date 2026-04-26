@@ -1,0 +1,37 @@
+Model: graph_edge_ae
+Seed: 21
+
+Config:
+  graph_file: graphs/web_ids23_graph.pt
+  max_train: 0
+  max_eval: 0
+  epochs: 30
+  batch_size: 8192
+  lr: 0.001
+  hidden_channels: 128
+  latent_channels: 64
+  threshold_percentile: 95.0
+  device: cpu
+  train_split_size: 577630
+  val_split_size: 5441530
+  test_split_size: 5441532
+
+Validation:
+  ROC-AUC: 0.935135
+  PR-AUC: 0.998351
+  Threshold: 0.003124
+  False positive rate: 0.050001
+  Attack recall / detection rate: 0.815097
+  Confusion matrix [[TN, FP], [FN, TP]]:
+  [[117589, 6189],
+   [983269, 4334483]]
+
+Test:
+  ROC-AUC: 0.935701
+  PR-AUC: 0.998365
+  Threshold: 0.003124
+  False positive rate: 0.050227
+  Attack recall / detection rate: 0.814907
+  Confusion matrix [[TN, FP], [FN, TP]]:
+  [[117562, 6217],
+   [984277, 4333476]]
