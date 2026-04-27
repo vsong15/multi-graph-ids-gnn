@@ -1,0 +1,39 @@
+Model: graphsage
+Seed: 21
+
+Config:
+  graph_file: graphs/web_ids23_knn_graph.pt
+  model: graphsage
+  task: node_classification
+  hidden_dim: 128
+  num_layers: 2
+  dropout: 0.3
+  lr: 0.005
+  weight_decay: 0.0005
+  epochs: 200
+  patience: 30
+  threshold_percentile: 95.0
+  device: cpu
+  train_split_size: 1857
+  val_split_size: 398
+  test_split_size: 399
+
+Validation:
+  ROC-AUC: 1.000000
+  PR-AUC: 1.000000
+  Threshold: 0.007829
+  False positive rate: 0.050265
+  Attack recall / detection rate: 1.000000
+  Confusion matrix [[TN, FP], [FN, TP]]:
+  [[359, 19],
+   [0, 20]]
+
+Test:
+  ROC-AUC: 0.900726
+  PR-AUC: 0.886008
+  Threshold: 0.007829
+  False positive rate: 0.036939
+  Attack recall / detection rate: 0.900000
+  Confusion matrix [[TN, FP], [FN, TP]]:
+  [[365, 14],
+   [2, 18]]

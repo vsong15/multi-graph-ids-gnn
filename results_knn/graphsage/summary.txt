@@ -1,0 +1,16 @@
+Model: graphsage
+Runs: 5
+
+Mean +/- std across seeds
+
+Validation:
+  roc_auc: 1.000000 +/- 0.000000
+  pr_auc: 1.000000 +/- 0.000000
+  fpr: 0.050265 +/- 0.000000
+  attack_recall: 1.000000 +/- 0.000000
+
+Test:
+  roc_auc: 0.946887 +/- 0.034791
+  pr_auc: 0.916288 +/- 0.029207
+  fpr: 0.037995 +/- 0.003008
+  attack_recall: 0.940000 +/- 0.041833

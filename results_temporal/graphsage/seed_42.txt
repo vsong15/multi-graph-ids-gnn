@@ -1,0 +1,42 @@
+Model: graphsage
+Seed: 42
+
+Config:
+  graph_file: graphs/web_ids23_temporal_graph_supervised.pt
+  model: graphsage
+  task: edge_classification
+  build_seed: 42
+  flow_subsample: 400000
+  hidden_dim: 128
+  num_layers: 2
+  dropout: 0.3
+  lr: 0.005
+  weight_decay: 0.0005
+  epochs: 60
+  patience: 10
+  edge_batch_size: 65536
+  threshold_percentile: 95.0
+  device: cpu
+  train_split_size: 280000
+  val_split_size: 60000
+  test_split_size: 60000
+
+Validation:
+  ROC-AUC: 0.998613
+  PR-AUC: 0.999887
+  Threshold: 0.212670
+  False positive rate: 0.050000
+  Attack recall / detection rate: 0.999461
+  Confusion matrix [[TN, FP], [FN, TP]]:
+  [[4104, 216],
+   [30, 55650]]
+
+Test:
+  ROC-AUC: 0.997893
+  PR-AUC: 0.999820
+  Threshold: 0.212670
+  False positive rate: 0.053472
+  Attack recall / detection rate: 0.999677
+  Confusion matrix [[TN, FP], [FN, TP]]:
+  [[4089, 231],
+   [18, 55662]]
