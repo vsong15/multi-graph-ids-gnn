@@ -1,0 +1,16 @@
+Model: gat
+Runs: 5
+
+Mean +/- std across seeds
+
+Validation:
+  roc_auc: 0.933932 +/- 0.013790
+  pr_auc: 0.998350 +/- 0.000361
+  fpr: 0.050001 +/- 0.000000
+  attack_recall: 0.789242 +/- 0.022498
+
+Test:
+  roc_auc: 0.934437 +/- 0.013577
+  pr_auc: 0.998357 +/- 0.000355
+  fpr: 0.049923 +/- 0.000289
+  attack_recall: 0.788936 +/- 0.022593

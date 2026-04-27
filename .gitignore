@@ -3,3 +3,4 @@ web_ids23_merged_clean.csv
 graphs/
 __pycache__
 .vscode
+.DS_Store

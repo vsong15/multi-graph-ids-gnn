@@ -12,7 +12,7 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 from torch import nn
-from torch_geometric.nn import GCNConv
+from torch_geometric.nn import GATConv, GCNConv
 from torch_geometric.utils import coalesce
 
 
@@ -406,6 +406,150 @@ def batched_graph_scores(
     return torch.cat(scores).numpy()
 
 
+class GATNodeEncoder(nn.Module):
+    def __init__(self, in_channels, hidden_channels, out_channels, heads=4):
+        super().__init__()
+        self.conv1 = GATConv(in_channels, hidden_channels, heads=heads, concat=True, dropout=0.0)
+        self.conv2 = GATConv(hidden_channels * heads, out_channels, heads=1, concat=False, dropout=0.0)
+
+    def forward(self, x, edge_index):
+        x = self.conv1(x, edge_index).relu()
+        return self.conv2(x, edge_index)
+
+
+class GraphEdgeGATAutoencoder(nn.Module):
+    def __init__(
+        self,
+        node_in_channels,
+        edge_in_channels,
+        hidden_channels=128,
+        node_latent_channels=64,
+        heads=4,
+    ):
+        super().__init__()
+        self.node_encoder = GATNodeEncoder(
+            node_in_channels,
+            hidden_channels,
+            node_latent_channels,
+            heads=heads,
+        )
+        self.edge_encoder = nn.Sequential(
+            nn.Linear((2 * node_latent_channels) + edge_in_channels, hidden_channels),
+            nn.ReLU(),
+            nn.Linear(hidden_channels, hidden_channels),
+            nn.ReLU(),
+        )
+        self.edge_decoder = nn.Linear(hidden_channels, edge_in_channels)
+
+    def forward(self, x, graph_edge_index, flow_edge_index, edge_attr):
+        z = self.node_encoder(x, graph_edge_index)
+        src = flow_edge_index[0]
+        dst = flow_edge_index[1]
+        edge_input = torch.cat([z[src], edge_attr, z[dst]], dim=1)
+        h = self.edge_encoder(edge_input)
+        return self.edge_decoder(h)
+
+
+def batched_gat_scores(
+    model,
+    x,
+    graph_edge_index,
+    flow_edge_index,
+    edge_attr,
+    batch_size,
+):
+    model.eval()
+    scores = []
+    with torch.no_grad():
+        z = model.node_encoder(x, graph_edge_index)
+        for start in range(0, edge_attr.size(0), batch_size):
+            end = start + batch_size
+            edges = flow_edge_index[:, start:end]
+            attrs = edge_attr[start:end]
+            src = edges[0]
+            dst = edges[1]
+            edge_input = torch.cat([z[src], attrs, z[dst]], dim=1)
+            h = model.edge_encoder(edge_input)
+            recon = model.edge_decoder(h)
+            score = F.mse_loss(recon, attrs, reduction="none").mean(dim=1)
+            scores.append(score.cpu())
+    return torch.cat(scores).numpy()
+
+
+def run_gat_edge_autoencoder(
+    data,
+    train_idx,
+    val_idx,
+    test_idx,
+    epochs,
+    batch_size,
+    lr,
+    hidden_channels,
+    latent_channels,
+    device,
+    threshold_percentile,
+    seed,
+    heads=4,
+):
+    print("\n=== GAT edge-feature autoencoder ===")
+    print("Uses node features + graph attention message passing + edge flow features.")
+    set_seed(seed)
+
+    x = data.x.to(device)
+    train_flow_edges = data.edge_index[:, train_idx].to(device)
+    train_edge_attr = data.edge_attr[train_idx].to(device)
+
+    graph_edge_index = coalesce(train_flow_edges)
+
+    model = GraphEdgeGATAutoencoder(
+        node_in_channels=data.x.size(1),
+        edge_in_channels=data.edge_attr.size(1),
+        hidden_channels=hidden_channels,
+        node_latent_channels=latent_channels,
+        heads=heads,
+    ).to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+
+    for epoch in range(1, epochs + 1):
+        model.train()
+        perm = torch.randperm(train_edge_attr.size(0), device=device)
+        total_loss = 0.0
+
+        for start in range(0, train_edge_attr.size(0), batch_size):
+            idx = perm[start:start + batch_size]
+            batch_edges = train_flow_edges[:, idx]
+            batch_attr = train_edge_attr[idx]
+
+            optimizer.zero_grad()
+            recon = model(x, graph_edge_index, batch_edges, batch_attr)
+            loss = F.mse_loss(recon, batch_attr)
+            loss.backward()
+            optimizer.step()
+
+            total_loss += loss.item() * batch_attr.size(0)
+
+        if epoch == 1 or epoch % 5 == 0:
+            print(f"Epoch {epoch:03d} loss: {total_loss / train_edge_attr.size(0):.6f}")
+
+    val_edges = data.edge_index[:, val_idx].to(device)
+    val_attr = data.edge_attr[val_idx].to(device)
+    test_edges = data.edge_index[:, test_idx].to(device)
+    test_attr = data.edge_attr[test_idx].to(device)
+
+    val_scores = batched_gat_scores(model, x, graph_edge_index, val_edges, val_attr, batch_size)
+    test_scores = batched_gat_scores(model, x, graph_edge_index, test_edges, test_attr, batch_size)
+
+    val_labels = data.edge_label[val_idx].cpu().numpy()
+    test_labels = data.edge_label[test_idx].cpu().numpy()
+    val_metrics = evaluate_scores(val_labels, val_scores, threshold_percentile=threshold_percentile)
+    test_metrics = evaluate_scores(test_labels, test_scores, threshold=val_metrics["threshold"])
+
+    return {
+        "validation": val_metrics,
+        "test": test_metrics,
+    }
+
+
 def run_graph_edge_autoencoder(
     data,
     train_idx,
@@ -505,9 +649,10 @@ def main():
     parser.add_argument("--graph-file", default=GRAPH_FILE)
     parser.add_argument(
         "--model",
-        choices=["all", "isoforest", "feature_ae", "graph_edge_ae"],
+        choices=["all", "isoforest", "feature_ae", "graph_edge_ae", "gat"],
         default="all",
     )
+    parser.add_argument("--gat-heads", type=int, default=4, help="Number of attention heads for GAT.")
     parser.add_argument(
         "--max-train",
         type=int,
@@ -576,7 +721,7 @@ def main():
     print(f"Test: {len(test_idx):,}")
 
     models = (
-        ["isoforest", "feature_ae", "graph_edge_ae"]
+        ["isoforest", "feature_ae", "graph_edge_ae", "gat"]
         if args.model == "all"
         else [args.model]
     )
@@ -596,6 +741,7 @@ def main():
         "hidden_channels": args.hidden_channels,
         "latent_channels": args.latent_channels,
         "threshold_percentile": args.threshold_percentile,
+        "gat_heads": args.gat_heads,
         "device": args.device,
         "train_split_size": len(train_idx),
         "val_split_size": len(val_idx),
@@ -687,6 +833,33 @@ def main():
                 result["validation"],
                 result["test"],
             )
+            print(f"Saved run: {path}")
+
+        if "gat" in models:
+            result = run_gat_edge_autoencoder(
+                data,
+                seed_train_idx,
+                seed_val_idx,
+                seed_test_idx,
+                args.epochs,
+                args.batch_size,
+                args.lr,
+                args.hidden_channels,
+                args.latent_channels,
+                args.device,
+                args.threshold_percentile,
+                seed,
+                heads=args.gat_heads,
+            )
+            all_results["gat"].append(result)
+            path = save_seed_result(
+                args.results_dir,
+                "gat",
+                seed,
+                result,
+                config,
+            )
+            print_seed_result("gat", seed, result["validation"], result["test"])
             print(f"Saved run: {path}")
 
     summarize_results(all_results, args.results_dir)

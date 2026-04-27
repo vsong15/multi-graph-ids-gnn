@@ -1,0 +1,38 @@
+Model: gat
+Seed: 42
+
+Config:
+  graph_file: graphs/web_ids23_temporal_graph.pt
+  max_train: 0
+  max_eval: 0
+  epochs: 30
+  batch_size: 8192
+  lr: 0.001
+  hidden_channels: 128
+  latent_channels: 64
+  threshold_percentile: 95.0
+  gat_heads: 4
+  device: cpu
+  train_split_size: 577630
+  val_split_size: 5741059
+  test_split_size: 5741060
+
+Validation:
+  ROC-AUC: 0.924639
+  PR-AUC: 0.998122
+  Threshold: 0.002323
+  False positive rate: 0.050001
+  Attack recall / detection rate: 0.773195
+  Confusion matrix [[TN, FP], [FN, TP]]:
+  [[117589, 6189],
+   [1274030, 4343251]]
+
+Test:
+  ROC-AUC: 0.924859
+  PR-AUC: 0.998124
+  Threshold: 0.002323
+  False positive rate: 0.051131
+  Attack recall / detection rate: 0.772818
+  Confusion matrix [[TN, FP], [FN, TP]]:
+  [[117450, 6329],
+   [1276144, 4341137]]
